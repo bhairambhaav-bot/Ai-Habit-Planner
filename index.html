@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hybrid AI Study Planner & Habit Loop Tracker</title>
+    <link rel="stylesheet" href="css/style.css">
+    <!-- PDF.js for reading PDF directly in browser without binary gibberish -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+</head>
+<body>
+    <!-- Top Navigation Bar -->
+    <header class="topbar">
+        <div class="brand">
+            <span class="logo-icon">⚡</span>
+            <div>
+                <h1>AgileStudy AI</h1>
+                <p class="subtitle">Online Syllabus AI Analyzer + 100% Offline Study Planner & Habit Tracker</p>
+            </div>
+        </div>
+        <div class="nav-actions">
+            <span id="networkStatusBadge" class="badge online-badge">🌐 Online (Upload Phase)</span>
+            <button id="themeToggleBtn" class="btn btn-outline" title="Toggle Dark/Light Mode">🌙</button>
+            <button id="resetDataBtn" class="btn btn-outline btn-sm" title="Reset Demo Data">↺ Reset Demo</button>
+        </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="tab-nav">
+        <button class="tab-btn active" data-tab="tab-syllabus">📄 1. Upload Syllabus (AI Analyzer)</button>
+        <button class="tab-btn" data-tab="tab-dashboard">📊 Dashboard</button>
+        <button class="tab-btn" data-tab="tab-scheduler">📅 Smart AI Scheduler</button>
+        <button class="tab-btn" data-tab="tab-habits">🔄 Habit Loop Tracker</button>
+        <button class="tab-btn" data-tab="tab-timer">⏱️ Focus Timer (Pomodoro)</button>
+        <button class="tab-btn" data-tab="tab-analytics">📈 Analytics & Insights</button>
+    </nav>
+
+    <main class="container">
+        <!-- 0. SYLLABUS UPLOAD TAB (ONLINE AI ANALYSIS) -->
+        <section id="tab-syllabus" class="tab-pane active">
+            <div class="card syllabus-banner">
+                <div class="banner-header">
+                    <span class="banner-icon">🤖</span>
+                    <div>
+                        <h2>Smart Syllabus AI Analyzer (PDF & Text)</h2>
+                        <p class="text-muted">Apna syllabus PDF upload karein ya text paste karein. AI automatically PDF se readable text extract karke Units, Topics, Difficulty aur Deadlines schedule karega. Iske baad aap internet band kar sakte hain!</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="two-column-layout">
+                <!-- Syllabus Input Form -->
+                <div class="card">
+                    <h3>📤 Upload Syllabus (PDF / Text)</h3>
+                    <form id="syllabusForm">
+                        <div class="form-group">
+                            <label>Subject Name:</label>
+                            <input type="text" id="syllabusSubject" placeholder="e.g., Computer Organization & Architecture" required>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Target Exam / Finish Date:</label>
+                                <input type="date" id="syllabusTargetDate" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Daily Study Target (Hours):</label>
+                                <input type="number" id="syllabusDailyHours" min="1" max="12" value="3" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Upload Syllabus PDF File (.pdf):</label>
+                            <input type="file" id="syllabusFile" accept=".pdf,.txt">
+                            <small id="fileStatusText" class="text-muted">PDF choose karein ya niche box me syllabus paste karein.</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Or Paste Syllabus Text / Units:</label>
+                            <textarea id="syllabusText" rows="6" placeholder="Unit 1: Introduction to Computer Architecture, Bus structures, Memory operations...&#10;Unit 2: Cache Memory, Mapping techniques, Cache coherence...&#10;Unit 3: Pipelining, Instruction Hazards, Branch prediction..."></textarea>
+                        </div>
+
+                        <button type="submit" id="analyzeBtn" class="btn btn-primary full-width">
+                            <span>✨ Analyze Syllabus & Generate AI Plan</span>
+                        </button>
+                        <div id="aiLoadingSpinner" class="loading-state" style="display: none;">
+                            <div class="spinner"></div>
+                            <span id="spinnerText">Extracting PDF text & generating study schedule...</span>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Analysis Preview & Import -->
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <h3>📋 Generated Study Plan Preview</h3>
+                            <p class="text-muted">AI dwara banaya gaya topics, estimated hours aur priority table</p>
+                        </div>
+                        <button id="importPlanBtn" class="btn btn-success btn-sm" style="display: none;">
+                            💾 Save to Offline Storage
+                        </button>
+                    </div>
+
+                    <div id="planEmptyNotice" class="empty-placeholder">
+                        <span>📄</span>
+                        <p>Koi syllabus abhi analyze nahi hua hai.<br>Syllabus PDF upload karein ya paste karke <strong>"Analyze Syllabus"</strong> dabayein.</p>
+                    </div>
+
+                    <div id="planTableWrapper" class="table-responsive" style="display: none;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Unit / Topic</th>
+                                    <th>Estimated Hrs</th>
+                                    <th>Difficulty</th>
+                                    <th>Target Date</th>
+                                    <th>AI Priority</th>
+                                </tr>
+                            </thead>
+                            <tbody id="planPreviewTbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 1. DASHBOARD TAB -->
+        <section id="tab-dashboard" class="tab-pane">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon icon-blue">📋</div>
+                    <div>
+                        <h4 id="statTotalTasks">0</h4>
+                        <p>Total Tasks</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon icon-green">✅</div>
+                    <div>
+                        <h4 id="statCompletedTasks">0</h4>
+                        <p>Completed Tasks</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon icon-orange">🔥</div>
+                    <div>
+                        <h4 id="statActiveStreak">0 Days</h4>
+                        <p>Habit Streak</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon icon-purple">⏳</div>
+                    <div>
+                        <h4 id="statFocusTime">0 hrs</h4>
+                        <p>Focus Study Time</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card ai-recommendation-card">
+                <div class="ai-header">
+                    <span class="sparkle">✨</span>
+                    <h3>Offline AI Recommendation</h3>
+                </div>
+                <p id="aiSmartSuggestion">Calculating optimal study recommendations based on deadlines, energy level, and difficulty index...</p>
+            </div>
+
+            <div class="dashboard-columns">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>🔥 High Priority Schedule Today</h3>
+                        <span class="tag tag-high">Dynamic Weighted AI</span>
+                    </div>
+                    <ul id="quickTodayTasks" class="task-list"></ul>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h3>🔄 Active Habit Loops (Cue ➔ Routine ➔ Reward)</h3>
+                    </div>
+                    <div id="quickHabitLoops" class="habit-quick-list"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. SMART SCHEDULER TAB -->
+        <section id="tab-scheduler" class="tab-pane">
+            <div class="two-column-layout">
+                <div class="card">
+                    <h3>➕ Add Custom Study Task</h3>
+                    <form id="taskForm">
+                        <div class="form-group">
+                            <label>Subject / Topic Name:</label>
+                            <input type="text" id="taskTitle" placeholder="e.g., Cache Memory Mapping" required>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Target Deadline:</label>
+                                <input type="date" id="taskDeadline" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Estimated Hours:</label>
+                                <input type="number" id="taskDuration" min="0.5" step="0.5" value="2" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Difficulty Level (1 - 5):</label>
+                                <select id="taskDifficulty">
+                                    <option value="1">1 - Very Easy</option>
+                                    <option value="2">2 - Easy</option>
+                                    <option value="3" selected>3 - Moderate</option>
+                                    <option value="4">4 - Hard</option>
+                                    <option value="5">5 - Critical / Exam Heavy</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Importance / Weightage:</label>
+                                <select id="taskImportance">
+                                    <option value="1">Low Weightage</option>
+                                    <option value="2" selected>Medium Weightage</option>
+                                    <option value="3">High / Core Subject</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary full-width">⚡ Add to AI Timetable</button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <h3>🗓️ AI Optimized Timetable</h3>
+                            <p class="text-muted">Sorted dynamically by: Priority = (Urgency × 0.45) + (Difficulty × 0.35) + (Weight × 0.20)</p>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Status</th>
+                                    <th>Task / Subject</th>
+                                    <th>Deadline</th>
+                                    <th>AI Score</th>
+                                    <th>Priority</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="schedulerTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. HABIT LOOP TRACKER TAB -->
+        <section id="tab-habits" class="tab-pane">
+            <div class="two-column-layout">
+                <div class="card">
+                    <h3>🔄 Design a Habit Loop</h3>
+                    <p class="text-muted">Follows James Clear & Charles Duhigg's Habit Loop Architecture:</p>
+                    <form id="habitForm">
+                        <div class="form-group">
+                            <label>Habit Name:</label>
+                            <input type="text" id="habitName" placeholder="e.g., Solve 2 LeetCode / DSA Problems" required>
+                        </div>
+                        <div class="form-group">
+                            <label>1. Cue / Trigger (When & Where?):</label>
+                            <input type="text" id="habitCue" placeholder="e.g., Immediately after 7:30 AM tea" required>
+                        </div>
+                        <div class="form-group">
+                            <label>2. Routine (The Action):</label>
+                            <input type="text" id="habitRoutine" placeholder="e.g., Sit at desk and solve recursion problems for 45 mins" required>
+                        </div>
+                        <div class="form-group">
+                            <label>3. Reward (Positive Reinforcement):</label>
+                            <input type="text" id="habitReward" placeholder="e.g., 10 mins gaming or favorite coffee" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary full-width">Create Habit Loop</button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>🏆 Active Habit Loops & Streak Tracker</h3>
+                    </div>
+                    <div id="habitsListContainer" class="habits-list"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. FOCUS TIMER (POMODORO) TAB -->
+        <section id="tab-timer" class="tab-pane">
+            <div class="timer-container card">
+                <div class="timer-mode-buttons">
+                    <button class="timer-mode-btn active" data-time="25">Focus Session (25m)</button>
+                    <button class="timer-mode-btn" data-time="5">Short Break (5m)</button>
+                    <button class="timer-mode-btn" data-time="15">Long Break (15m)</button>
+                </div>
+
+                <div class="timer-display-box">
+                    <div class="timer-circle">
+                        <span id="timerCountdown">25:00</span>
+                        <span id="timerStatusLabel" class="timer-mode-label">Deep Focus</span>
+                    </div>
+                </div>
+
+                <div class="timer-controls">
+                    <button id="timerStartBtn" class="btn btn-success btn-lg">▶ Start Focus</button>
+                    <button id="timerPauseBtn" class="btn btn-warning btn-lg" disabled>⏸ Pause</button>
+                    <button id="timerResetBtn" class="btn btn-outline btn-lg">↺ Reset</button>
+                </div>
+
+                <div class="active-task-selector">
+                    <label>Link Session with Task:</label>
+                    <select id="timerTaskLink">
+                        <option value="">General Deep Work</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. ANALYTICS & INSIGHTS TAB -->
+        <section id="tab-analytics" class="tab-pane">
+            <div class="two-column-layout">
+                <div class="card">
+                    <h3>📊 Weekly Study Completion</h3>
+                    <div class="canvas-container">
+                        <canvas id="weeklyBarChart" width="400" height="260"></canvas>
+                    </div>
+                    <p class="text-muted text-center">Tasks completed across past 7 days</p>
+                </div>
+                <div class="card">
+                    <h3>🎯 Task Priority Breakdown</h3>
+                    <div class="canvas-container">
+                        <canvas id="priorityPieChart" width="400" height="260"></canvas>
+                    </div>
+                    <p class="text-muted text-center">Distribution of High, Medium, and Low Priority Work</p>
+                </div>
+            </div>
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h3>💡 Hybrid Architecture Highlights</h3>
+                </div>
+                <ul class="bullet-list">
+                    <li><strong>Upload Phase (Online):</strong> PDF Text extraction & AI breakdown runs seamlessly.</li>
+                    <li><strong>Execution Phase (100% Offline):</strong> All tasks are stored locally into browser <code>localStorage</code>.</li>
+                    <li><strong>Smart Clean Parser:</strong> Discards PDF binary tokens (obj, stream, etc.) and isolates meaningful syllabus topics.</li>
+                    <li><strong>Zero Ongoing Cost:</strong> Once syllabus is analyzed, no API calls, server costs, or active internet required.</li>
+                </ul>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <p><strong>Hybrid AI Study Planner & Habit Loop Tracker</strong> — College AI Mini Project</p>
+            <p>Built with Pure HTML5, Modern CSS, ES6 JavaScript, Python Flask & LocalStorage</p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="js/storage.js"></script>
+    <script src="js/scheduler.js"></script>
+    <script src="js/habits.js"></script>
+    <script src="js/timer.js"></script>
+    <script src="js/analytics.js"></script>
+    <script src="js/syllabus.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
